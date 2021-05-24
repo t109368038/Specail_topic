@@ -53,7 +53,7 @@ config = '../radar_config/IWR1843_cfg_3t4r_v3.4_1.cfg'
 
 class Realtime_sys():
 
-    def __init__(self):
+    def __init__(self,radar_mainWindow):
         adc_sample = 64
         chirp = 16
         tx_num = 3
@@ -95,6 +95,7 @@ class Realtime_sys():
         self.rai_mode =  0
         self.save_frame_len = 120
 
+        self.ui=radar_mainWindow
 
     def restart(self):
         self.cam1_thread.restart_videowriter()
@@ -375,14 +376,16 @@ class Realtime_sys():
     def exit(self):
         # self.cam1_thread.quit()
         # self.cam2_thread.quit()
-        self.app.instance().exit()
+        app.instance().exit()
+        print("Program Close")
+        set_radar.StopRadar()
 
     def SaveData(self):
         np.save("C:/Users/user/Desktop/thmouse_training_data/raw.npy", self.raw)
         self.raw = []
         self.frame_count = 0
 
-    def plot(self,ui):
+    def plot(self):
         global img_rdi, img_rai, updateTime, view_text, count, angCurve, ang_cuv, img_cam, savefilename,view_rai,p13d,nice
         # ---------------------------------------------------
         # self.app = QtWidgets.QApplication(sys.argv)
@@ -390,6 +393,7 @@ class Realtime_sys():
         # MainWindow_radar.show()
         # ui = Ui_MainWindow_radar()
         # ui.setupUi(MainWindow_radar)
+        ui=self.ui
         self.browse_btn = ui.browse_btn
         self.browse_text = ui.textEdit
         self.browse_text_cam1 = ui.textEdit_cam1
@@ -577,25 +581,25 @@ class Realtime_sys():
         self.origin_QQ = gl.GLScatterPlotItem(pos=np.array([0, 0, 0]), color=[140, 140, 140, 255], size=20)
         view_PD.addItem(self.origin_QQ)
 
-    def Run_Radar(self,realtime,ui):
-        global count,pd_time_avg
-        print('======Real Time Data Capture Tool======')
-        count = 0
-
-        maxsize = 5
-        pd_time_avg = np.zeros(maxsize * 4).reshape(maxsize, 4)
-
-        lock = threading.Lock()
-        # Radar config
-
-        plotIMAGE = threading.Thread(target=realtime.plot(ui))
-        plotIMAGE.start()
-        # cam1_thread.join(timeout=1)
-        # cam2_thread.join(timeout=1)
-        # collector.join(timeout=1)
-        # processor.join(timeout=1)
-        print("Program Close")
-        set_radar.StopRadar()
+    # def Run_Radar(self,realtime,ui):
+    #     global count,pd_time_avg
+    #     print('======Real Time Data Capture Tool======')
+    #     count = 0
+    #
+    #     maxsize = 5
+    #     pd_time_avg = np.zeros(maxsize * 4).reshape(maxsize, 4)
+    #
+    #     lock = threading.Lock()
+    #     # Radar config
+    #
+    #     plotIMAGE = threading.Thread(target=realtime.plot(ui))
+    #     plotIMAGE.start()
+    #     # cam1_thread.join(timeout=1)
+    #     # cam2_thread.join(timeout=1)
+    #     # collector.join(timeout=1)
+    #     # processor.join(timeout=1)
+    #     print("Program Close")
+    #     set_radar.StopRadar()
 
 
 
@@ -603,12 +607,11 @@ class Realtime_sys():
 
 class MainWindow(QMainWindow):
     def __init__(self):
-        global ui_radar
         QMainWindow.__init__(self)
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
 
-        self.radar_UI = QMainWindow()
+        # radar_UI = QMainWindow()
 
         # self.send_Query=Realtime_sys(self.ui_radar)
 
@@ -713,12 +716,11 @@ class MainWindow(QMainWindow):
         # PAGE Test
         if btnWidget.objectName() == "btn_MP3":
 
-            self.radar_UI.show()
-            ui_radar=Ui_MainWindow_radar()
-            ui_radar.setupUi(self.radar_UI)
+            radar_UI.show()
+            # ui_radar=Ui_MainWindow_radar()
+            # ui_radar.setupUi(radar_UI)
 
-            realtime=Realtime_sys()
-            realtime.Run_Radar(realtime,ui_radar)
+
 
 
 
@@ -740,4 +742,29 @@ if __name__ == "__main__":
     QtGui.QFontDatabase.addApplicationFont('./fonts/segoeui.ttf')
     QtGui.QFontDatabase.addApplicationFont('./fonts/segoeuib.ttf')
     window = MainWindow()
+
+    radar_UI = QMainWindow()
+
+    ui_radar = Ui_MainWindow_radar()
+    ui_radar.setupUi(radar_UI)
+
+    print('======Real Time Data Capture Tool======')
+    count = 0
+    realtime = Realtime_sys(ui_radar)
+
+    maxsize = 5
+    pd_time_avg = np.zeros(maxsize * 4).reshape(maxsize, 4)
+
+    lock = threading.Lock()
+    # Radar config
+
+    plotIMAGE = threading.Thread(target=realtime.plot())
+    plotIMAGE.start()
+    # cam1_thread.join(timeout=1)
+    # cam2_thread.join(timeout=1)
+    # collector.join(timeout=1)
+    # processor.join(timeout=1)
+
+
+
     sys.exit(app.exec_())
