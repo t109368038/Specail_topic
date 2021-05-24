@@ -24,7 +24,7 @@ import socket
 import cv2
 
 # -----------------------------------------------
-from app_layout_2t4r import Ui_MainWindow_radar
+from app_layout_2t4r_test import Ui_MainWindow_radar
 from R3t4r_to_point_cloud_for_realtime import plot_pd
 # from caclulate_mediapipe import deal_imag
 # -----------------------------------------------

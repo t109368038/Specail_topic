@@ -53,7 +53,7 @@ config = '../radar_config/IWR1843_cfg_3t4r_v3.4_1.cfg'
 
 class Realtime_sys():
 
-    def __init__(self):
+    def __init__(self,radar_mainWindow):
         adc_sample = 64
         chirp = 16
         tx_num = 3
@@ -94,6 +94,8 @@ class Realtime_sys():
         self.realtime_mdoe = True
         self.rai_mode =  0
         self.save_frame_len = 120
+
+        self.ui=radar_mainWindow
 
 
     def restart(self):
@@ -382,7 +384,7 @@ class Realtime_sys():
         self.raw = []
         self.frame_count = 0
 
-    def plot(self,ui):
+    def plot(self):
         global img_rdi, img_rai, updateTime, view_text, count, angCurve, ang_cuv, img_cam, savefilename,view_rai,p13d,nice
         # ---------------------------------------------------
         # self.app = QtWidgets.QApplication(sys.argv)
@@ -390,6 +392,7 @@ class Realtime_sys():
         # MainWindow_radar.show()
         # ui = Ui_MainWindow_radar()
         # ui.setupUi(MainWindow_radar)
+        ui=self.ui
         self.browse_btn = ui.browse_btn
         self.browse_text = ui.textEdit
         self.browse_text_cam1 = ui.textEdit_cam1
@@ -577,26 +580,6 @@ class Realtime_sys():
         self.origin_QQ = gl.GLScatterPlotItem(pos=np.array([0, 0, 0]), color=[140, 140, 140, 255], size=20)
         view_PD.addItem(self.origin_QQ)
 
-    def Run_Radar(self,realtime,ui):
-        global count,pd_time_avg
-        print('======Real Time Data Capture Tool======')
-        count = 0
-
-        maxsize = 5
-        pd_time_avg = np.zeros(maxsize * 4).reshape(maxsize, 4)
-
-        lock = threading.Lock()
-        # Radar config
-
-        plotIMAGE = threading.Thread(target=realtime.plot(ui))
-        plotIMAGE.start()
-        # cam1_thread.join(timeout=1)
-        # cam2_thread.join(timeout=1)
-        # collector.join(timeout=1)
-        # processor.join(timeout=1)
-        print("Program Close")
-        set_radar.StopRadar()
-
 
 
 
@@ -712,14 +695,23 @@ class MainWindow(QMainWindow):
 
         # PAGE Test
         if btnWidget.objectName() == "btn_MP3":
+            global count,pd_time_avg
 
             self.radar_UI.show()
             ui_radar=Ui_MainWindow_radar()
             ui_radar.setupUi(self.radar_UI)
 
-            realtime=Realtime_sys()
-            realtime.Run_Radar(realtime,ui_radar)
+            print('======Real Time Data Capture Tool======')
+            count = 0
+            realtime = Realtime_sys(ui_radar)
+            maxsize = 5
+            pd_time_avg = np.zeros(maxsize * 4).reshape(maxsize, 4)
 
+            lock = threading.Lock()
+            # Radar config
+
+            plotIMAGE = threading.Thread(target=realtime.plot())
+            plotIMAGE.start()
 
 
             # self.ui.stackedWidget.setCurrentWidget(self.ui.page_mp3)
